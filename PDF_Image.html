@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Status Report</title>
+</head>
+
+<body>
+
+    <canvas id="the-canvas" style="direction: ltr;"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.js"></script>
+    <script id="script">
+
+        var xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+        xhr.open("GET", "https://gccdtpilot00.epicorsaas.com/SaaS1002Pilot/api/v2/odata/14864/BaqSvc/CR8_REST_SysRptLst/Data?api-key=6OcPPAnurCW5hslQ7U7Lpp9yqWoIXqW2hVuGBIXkfslon&ReportProg=reports/CustomReports/StockStatusReport/StockStatus");
+
+        xhr.onload = function () {
+            var data = JSON.parse(this.response);
+
+            if (xhr.status >= 200 && xhr.status < 400) {
+                var obj = document.createElement('object');
+
+                // obj.style.width = '100%';
+                // obj.style.height = '842pt';
+                obj.type = 'application/pdf';
+                obj.data = 'data:application/pdf;base64,' + data['value'][0]['SysRptLst1_RptData'];
+
+            }   
+            var BASE64_MARKER = ';base64,';
+       
+            var pdfAsArray = convertDataURIToBinary('data:application/pdf;base64,' + data['value'][0]['SysRptLst1_RptData']);
+            var pdfData = pdfAsArray;
+
+            //
+            // The workerSrc property shall be specified.
+            //
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf.worker.js';
+
+            // Opening PDF by passing its binary data as a string. It is still preferable
+            // to use Uint8Array, but string or array-like structure will work too.
+            var loadingTask = pdfjsLib.getDocument({ data: pdfData, });
+            loadingTask.promise.then(function (pdf) {
+                // Fetch the first page.
+                pdf.getPage(1).then(function (page) {
+                    var scale = 1.5;
+                    var viewport = page.getViewport({ scale: scale, });
+
+                    // Prepare canvas using PDF page dimensions.
+                    var canvas = document.getElementById('the-canvas');
+                    var context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    // Render PDF page into canvas context.
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport,
+                    };
+                    page.render(renderContext);
+                });
+            });
+        }
+        xhr.responsetype = 'blob';
+        xhr.overrideMimeType('text/plain; charset=x-user-defined');
+        xhr.setRequestHeader("Content-Type", "text/json")
+        xhr.setRequestHeader("Accept", "application/json");
+        xhr.setRequestHeader("X-API-Key", "6OcPPAnurCW5hslQ7U7Lpp9yqWoIXqW2hVuGBIXkfslon");
+        xhr.setRequestHeader("Authorization", "Basic QW5keWNyODpLMXJrbEBuZA==");
+        var pre = "{  \n   \"whereClauseRMADtl\": \"\",  \n   \"pageSize\": 0,  \n   \"absolutePage\": 0  \n }";
+        xhr.send(pre);
+            function atou(b64) {
+                return decodeURIComponent(escape(atob(b64)));    
+                }
+                function convertDataURIToBinary(dataURI) {
+                    var BASE64_MARKER = ';base64,';
+
+                    var base64Index = dataURI.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
+                    var base64 = dataURI.substring(base64Index);
+                    var raw = window.atob(base64);
+                    var rawLength = raw.length;
+                    var array = new Uint8Array(new ArrayBuffer(rawLength));
+
+                    for (var i = 0; i < rawLength; i++) {
+                        array[i] = raw.charCodeAt(i);
+                    }
+                    return array;
+  } 
+    </script>
+</body>
+
+</html>
